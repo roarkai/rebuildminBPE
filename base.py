@@ -75,8 +75,8 @@ class Tokenizer:
             - keys in merges
         - vocab file is just a pretty printed version for human inspection only
           - elemetns in vocab has two type:
-            - type_1: {(int_c0, int_c1), int_p}, where int_p is in the range of 255 ~ vocab_size
-            - type_2: {int}, where int is in the range of 0 ~ 255
+            - type_1: {(int_c0, int_c1), int_p}, value of int_p is in 255~vocab_size
+            - type_2: {int}, value of int is in the range of 0 ~ 255
           - contents included:
             - type_1: [str_c0, str_c1] -> [str_p] int_p
             - type_2: [str] int
@@ -85,8 +85,7 @@ class Tokenizer:
         self._save_vocab(file_prefix)
 
     ## save file_prefix.model
-    def _save_model(self, file_prefix):
-        
+    def _save_model(self, file_prefix):        
         model_file = file_prefix + '.model'
 
         # given that the contents saved here are all simple characters, 
@@ -104,14 +103,12 @@ class Tokenizer:
 
     ## save file_prefix.vocab
     def _save_vocab(self, file_prefix):
-        
         vocab_file = file_prefix + '.vocab'
     
         inverted_merges = {idx: pair for pair, idx in self.merges.items()}
         # given that the str corresponding to bytes in the vocab would include 
         # all kinds of unicode point, open() has to specify the 'encoding' argument
         with open(vocab_file, 'w', encoding='utf-8') as f:
-            # 
             for idx, token in self.vocab.items():
                 str_idx = render_token(token)
             
@@ -213,7 +210,6 @@ def merge_pair(ids, pair, idx):
     if i < len(ids):
         new_ids.append(ids[i])
         i += 1
-    # print(f'at the end of merge_pair: len(old_ids) = {len(ids)}, len(new_ids) = {len(new_ids)}') # for debug
     return new_ids
 
 # help function used in self.encode_single_chunk()
@@ -236,8 +232,8 @@ def merge_all(ids, merges):
         pairs = get_pairs(ids)
             
         #  find a target pair to be merge, it should be:
-        #  1. in the merges, so there is a corresponding idx supposed to replace the pair in ids
-        #  2. among all pairs, has the lowest idx in the merges
+        #  1. in the merges, so a corresponding idx is supposed to replace a pair
+        #  2. among all pairs, it's the one with the lowest idx in the merges
         tar_pair = min(pairs, key=lambda p: merges.get(p, float('inf')))
 
         #  test if nothing can be merged
@@ -254,7 +250,8 @@ def merge_all(ids, merges):
 def get_stats(ids):
     """
     output:
-    @cnt({k=pair: v=frequency_count}): frequency count for each pair of consecutive elements in @ids
+    @cnt({k=pair: v=frequency_count}): frequency count for each pair of consecutive
+                                       elements in @ids
     """
     cnt = {}
     for pair in zip(ids, ids[1:]):

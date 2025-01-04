@@ -25,8 +25,7 @@ def bpe(mergable_ranks, token, max_rank):
             break
 
         # otherwise, continue the merge loop
-        parts = parts[:min_idx] + \
-                [parts[min_idx] + parts[min_idx + 1]] + \
+        parts = parts[:min_idx] + [parts[min_idx] + parts[min_idx + 1]] + \
                 parts[min_idx + 2:]
     
     return parts
@@ -50,9 +49,9 @@ def recover_merges(mergeable_ranks):
 
     return merges
 
-def render_token(t: bytes) -> str:
+# def render_token(t: bytes) -> str:
 
-    pass
+#     pass
 
 GPT4_SPLIT_PATTERN = r"""'(?i:[sdmt]|ll|ve|re)|[^\r\n\p{L}\p{N}]?+\p{L}+|\p{N}{1,3}| ?[^\s\p{L}\p{N}]++[\r\n]*|\s*[\r\n]|\s+(?!\S)|\s+"""
 GPT4_SPECIAL_TOKENS = {
