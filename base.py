@@ -1,3 +1,11 @@
+"""
+Contains the base Tokenizer class and a few common helper functions.
+The base class also contains the (common) save/load functionality.
+It would be possible to be a lot more strict about the interface and
+e.g. isolating all regex/pattern parts to the RegexTokenizer, but
+some concessions are made for simplicity.
+"""
+
 import unicodedata
 
 ## helper funcitons for Tokenizer.save method
@@ -44,10 +52,10 @@ class Tokenizer:
     
     def _build_vocab(self):
         ## construct self.vocab
-        #  self.vocab is the "index -> raw bytes" table represented in an dictionary
-        #  it records the information about merged pairs, but unlike the self.merges:
-        #  - in self.merges: key : value <> new_idx : (merged_idx_1, merged_idx_2)
-        #  - in self.vocab:  key : value <> idx : raw_bytes_of_all_ids_merged_in_this_idx
+        #  self.vocab is in the form of {index: raw bytes} it records 
+        #  the information about merged pairs, but unlike the self.merges:
+        #  - self.merges: key : value <> (merged_idx1, merged_idx2) : new_idx
+        #  - self.vocab:  key : value <> idx : bytes_of_all_ids_merged_in_idx
         vocab = {idx: bytes([idx]) for idx in range(256)}
         for (p0, p1), idx in self.merges.items():
             vocab[idx] = vocab[p0] + vocab[p1]
@@ -73,8 +81,12 @@ class Tokenizer:
             - type_1: [str_c0, str_c1] -> [str_p] int_p
             - type_2: [str] int
         """
+        self._save_model(file_prefix)
+        self._save_vocab(file_prefix)
 
-        ## save file_prefix.model
+    ## save file_prefix.model
+    def _save_model(self, file_prefix):
+        
         model_file = file_prefix + '.model'
 
         # given that the contents saved here are all simple characters, 
@@ -90,7 +102,9 @@ class Tokenizer:
             for idx1, idx2 in self.merges:           # all keys in merges
                 f.write(f'{idx1} {idx2}\n')
 
-        ## save file_prefix.vocab
+    ## save file_prefix.vocab
+    def _save_vocab(self, file_prefix):
+        
         vocab_file = file_prefix + '.vocab'
     
         inverted_merges = {idx: pair for pair, idx in self.merges.items()}
@@ -141,25 +155,30 @@ class Tokenizer:
                  Then the tokens would be processed by a language model.
 
         inputs:
-        @text_in(str string): str string type data. every character is first converted to a 
-                              byte string, which then would be split to an integer list with 
-                              each integer correcpondes to one byte data in the raw byte string.
+        @text_in(str string): str string type data. every character is first 
+                              converted to a byte string, which then would be split
+                              to an integer list with each integer correcpondes to
+                              one byte data in the raw byte string.
 
         output:
-        @tok_in(list of intergers): The value of each element is in the range of 0~vocab_size.
-                                    And each element is one token of input that would be 
-                                    processed by a language model.
+        @tok_in(list of intergers): The value of each element is in the range of 
+                                    0~vocab_size. And each element is one token of
+                                    input that will be processed by a language model.
         """
         # convert the input text from str string to raw bytes
         bytes_in = text_in.encode('utf-8')
         
-        # then split it to a list with each element stands for a byte in the raw bytes data
-        idx_in = list(map(int, bytes_in))
-        
+        # split it to a list with each element stands for a byte in the raw bytes
+        idx_in = self.bytes_to_ids(bytes_in)
+                
         # execute the merging
         tok_in = merge_all(idx_in, self.merges)
 
         return tok_in
+    
+    # GPT4 will override this method to handle its shuffled vocab 
+    def bytes_to_ids(self, bytes_in):
+        return list(map(int, bytes_in))
     
 ## helper function used in BasicTokenizer and RegexTokenizer
 
@@ -167,18 +186,19 @@ class Tokenizer:
 def merge_pair(ids, pair, idx):
     """
     inputs:
-    @ids(list of integers): stands for the token state of the training text before merge.
-                            Each pair of its consecutive elements will be matched to the 
-                            target pair @pair. Any matched pair will be replaced by the corresponding
-                            new index specifiled by @idx.
-    @pair(tuple of two integer): target pair of indexes. if any pair of consecutive elements in the 
-                                 @ids has the same value of it, they will be replaced.
+    @ids(list of integers): stands for the token state of the training text before 
+                            merge. Each pair of consecutive elements will be matched
+                            to the target pair @pair. Any matched pair will be
+                            replaced by a new index specifiled by @idx.
+    @pair(tuple of two integer): target pair of indexes. any pair of consecutive
+                                 elements in @ids that has the same value of it
+                                 will be replaced.
     @idx(int): a new index that will substitute the @pair in the @ids
 
     output:
-    @new_ids(list of integers): stands for the new token state of the text after every pair of 
-                                consecutive elements that has the same value as the @pair
-                                has been merged.
+    @new_ids(list of integers): the new token state of the text after every pair of
+                                consecutive elements that has the same value as the 
+                                @pair has been merged.
     """
     new_ids = []
     i = 0

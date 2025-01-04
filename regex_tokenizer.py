@@ -1,3 +1,14 @@
+"""
+Minimal (byte-level) Byte Pair Encoding tokenizer.
+
+Algorithmically follows along the GPT tokenizer:
+https://github.com/openai/gpt-2/blob/master/src/encoder.py
+
+Unlike BasicTokenizer:
+- RegexTokenizer handles an optional regex splitting pattern.
+- RegexTokenizer handles optional special tokens.
+"""
+
 from base import Tokenizer, merge_pair
 import regex as re
 
@@ -77,35 +88,38 @@ class RegexTokenizer(Tokenizer):
 
     def encode(self, text_in, allowed_special='none'):
         """
-        encode text_in. convert the str string type input corpus to a list of integers called tokens.
-        unlike encode() in BasicTokenizer, special tokens needs to be handled here
+        encode text_in. convert the str string type input corpus to a list of 
+        integers called tokens. unlike encode() in BasicTokenizer, special 
+        tokens needs to be handled here
 
         inputs:
-        @allowed_special: used to specify how to handle special tokens. There are four values for it:
+        @allowed_special: used to specify how to handle special tokens. There are
+                          four values for it:
                           1. 'all': all special tokens in the tokenizer will be used
-                          2. 'none': no special tokens will be handled, even if there are special
-                                     tokens in the text, which means special tokens will be treated 
-                                     the same as normal characters.
-                          3. 'none_raise': no special tokens will be used, but need to make sure that
-                                           there are no special tokens in the text. otherwise a 
-                                           ValueError will be raised.
-                          4. a set of special tokens: only the specified spceial tokens will be handled
-                                                      as special tokens. if there are other special tokens
-                                                      in the text that are not in the set but are in the 
-                                                      tokenizer model, they will be handled as normal characters.
-        @text_in: str string type data composed of normal character and special tokens. The two kinds
-                  of tokens are encoded seperately. the procedure is:
-                  1. split the text apart with consecutive normal characters in a single chunk and 
-                     each special token is an independent chunk.
+                          2. 'none': special tokens will not be handled, even if there
+                                     are some in the text, which means special tokens 
+                                     will be treated the same as normal characters.
+                          3. 'none_raise': no special tokens will be used, but need to
+                                           make sure no special tokens in the text. 
+                                           otherwise a ValueError will be raised.
+                          4. set of special tokens: spceial tokens in the set will be
+                                                    handled, others not in the set but
+                                                    in the tokenizer model will be 
+                                                    treated as normal characters.
+        @text_in: str string composed of normal character and special tokens. The two
+                  are encoded seperately. the procedure is:
+                  1. split the text with consecutive normal characters in a single 
+                     chunk and with each special token to be an independent chunk.
                   2. encode those two kinds of chunks using different methods.
                      - For each normal character chunks:
                        1) Every character is converted to (utf-8) raw bytes
-                       2) The whole raw bytes are split into an list of integers, with each int 
-                       corresponding to one byte of (utf-8) raw bytes.
-                       3) merge the consecutive pairs of elements in the list if they are in the key
-                       of @self.merges
+                       2) The whole raw bytes are split into a list of integers, with
+                       each int corresponding to one byte of (utf-8) raw bytes.
+                       3) merge the consecutive pairs of elements in the list if they
+                       are in the key of @self.merges
                      - For each speical tokens:
-                       Every special token is directyly converted to its number in the self.vocab
+                       Every special token is directyly converted to its number in the
+                       self.vocab
         """
         ## handle the configuration of special tokens
         special = None
@@ -148,14 +162,14 @@ class RegexTokenizer(Tokenizer):
         Finally, all merged lists are combined into a single list.
 
         inputs:
-        @text_in(str string): str string type data. every character is first converted to a 
-                              byte string, which then would be split to an integer list with 
-                              each integer correcpondes to one byte data in the raw byte string.
+        @text_in(str string): Every character is first converted to a byte string,
+                              which then would be split to an integer list with 
+                              each int correcponding to one byte in the byte string.
 
         output:
-        @tok_in(list of intergers): The value of each element is in the range of 0~vocab_size.
-                                    And each element is one token of input that would be 
-                                    processed by a language model.
+        @tok_in(list of intergers): The value of each element is in the range of 
+                                    0~vocab_size. And each element is one token of
+                                    input that would be processed by a language model.
         """
         # 1. split according to the regex pattern
         reged_txt = re_split(text_in, self.re_pat)
@@ -172,7 +186,7 @@ class RegexTokenizer(Tokenizer):
     def decode(self, toks_out):
         """
         mission: convert the outputs of LM @toks_out from token list to str string.
-                 besides ops in BasicTokenizer.decode, ops for special tokens is needed here.
+                 unlike BasicTokenizer.decode, special tokens will be handled here.
         input:
         @toks_out(list of integers): It is the output token list of LM. 
                                      int in the list is in the range of 0~vocab_size

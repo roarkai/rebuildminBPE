@@ -1,3 +1,14 @@
+"""
+Minimal (byte-level) Byte Pair Encoding tokenizer.
+
+Algorithmically follows along the GPT tokenizer:
+https://github.com/openai/gpt-2/blob/master/src/encoder.py
+
+But:
+- Does not handle the regular expression splitting pattern.
+- Does not handle any special tokens.
+"""
+
 from base import Tokenizer, merge_pair, get_stats
 
 class BasicTokenizer(Tokenizer):
@@ -53,8 +64,8 @@ class BasicTokenizer(Tokenizer):
 
         ## construct self.vocab
         #  self.vocab is the "index -> raw bytes" table represented in an dictionary
-        #  - in self.merges: key : value <> new_idx : (merged_idx_1, merged_idx_2)
-        #  - in self.vocab:  key : value <> idx : raw_bytes_of_all_ids_merged_in_this_idx
+        #  - in self.merges: key : value <> (merged_idx_1, merged_idx_2) : new_idx
+        #  - in self.vocab:  key : value <> idx : raw_bytes_of_all_ids_merged_in_idx
         self.vocab = self._build_vocab()
 
         
