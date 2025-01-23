@@ -8,5 +8,5 @@ There are four python files:
 4. 'rebuild_gpt4.py' reocovered the merge pairs and the vocabulary table of the GPT4 tokenizer. Then used them as a pre-trained model the same way as in regex_tokenizer.
 
 There are some differences from Andrey's original implementation:
-1. More comments have been added to explain the implementation detail. 
+1. More comments have been added to explain the implementation details. 
 2. Use a simpler way to handle the shuffled ranks in the GPT4 vocabulary table. This allows the recovered tokenizer to save and load the same way as in regex_tokenizer, which are not allowed in the original implementation.
